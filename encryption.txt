@@ -1,0 +1,23 @@
+encryption
+
+const crypto = require('crypto');
+const fs = require('fs');
+
+// Generate keys (one-time setup)
+// crypto.generateKeyPairSync('rsa', {
+//     modulusLength: 2048,
+//     publicKeyEncoding: { type: 'spki', format: 'pem' },
+//     privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
+// });
+
+// Encrypt data
+function encryptData(publicKey, data) {
+    return crypto.publicEncrypt(publicKey, Buffer.from(data)).toString('base64');
+}
+
+// Decrypt data
+function decryptData(privateKey, encryptedData) {
+    return crypto.privateDecrypt(privateKey, Buffer.from(encryptedData, 'base64')).toString();
+}
+
+module.exports = { encryptData, decryptData };

@@ -1,0 +1,31 @@
+deployment
+
+# Backend
+FROM node:14
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+CMD ["node", "server.js"]
+
+# Expose port
+EXPOSE 5000
+
+
+
+version: "3.8"
+services:
+  backend:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app
+    command: npm start
+
+  ai:
+    image: python:3.8
+    volumes:
+      - ./ai:/app
+    working_dir: /app
+    command: python -m uvicorn main:app --host 0.0.0.0 --port 8000
