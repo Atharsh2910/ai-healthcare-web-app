@@ -1,0 +1,228 @@
+frontend
+
+src/
+├── components/
+│   ├── PatientList.js
+│   ├── AddPatient.js
+│   ├── PatientDetails.js
+│   └── AIInsights.js
+├── services/
+│   └── api.js
+├── App.js
+├── index.js
+└── styles.css
+
+
+import axios from 'axios';
+
+const API = axios.create({ baseURL: '/api' });
+
+// Get all patients
+export const fetchPatients = () => API.get('/patients');
+
+// Add a new patient
+export const createPatient = (patientData) => API.post('/patients', patientData);
+
+// Update patient details
+export const updatePatient = (id, updatedData) => API.put(`/patients/${id}`, updatedData);
+
+// Get AI insights (example endpoint)
+export const getAIInsights = (data) => axios.post('http://localhost:8000/predict', data);
+
+
+
+import React from 'react';
+import PatientList from './components/PatientList';
+import AddPatient from './components/AddPatient';
+import './styles.css';
+
+function App() {
+    return (
+        <div className="app-container">
+            <header>
+                <h1>AI-Powered Health Platform</h1>
+            </header>
+            <main>
+                <PatientList />
+                <AddPatient />
+            </main>
+        </div>
+    );
+}
+
+export default App;
+
+
+import React, { useState, useEffect } from 'react';
+import { fetchPatients } from '../services/api';
+
+function PatientList() {
+    const [patients, setPatients] = useState([]);
+
+    useEffect(() => {
+        fetchPatients().then((response) => {
+            setPatients(response.data);
+        }).catch(err => console.error("Error fetching patients:", err));
+    }, []);
+
+    return (
+        <div className="patient-list">
+            <h2>Patient Records</h2>
+            <ul>
+                {patients.map((patient) => (
+                    <li key={patient._id}>
+                        <strong>{patient.name}</strong> - {patient.age} years
+                        <p>Conditions: {patient.chronicConditions.join(', ')}</p>
+                    </li>
+                ))}
+            </ul>
+        </div>
+    );
+}
+
+export default PatientList;
+
+
+
+import React, { useState } from 'react';
+import { createPatient } from '../services/api';
+
+function AddPatient() {
+    const [formData, setFormData] = useState({
+        name: '',
+        age: '',
+        chronicConditions: '',
+    });
+
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        const patientData = {
+            ...formData,
+            chronicConditions: formData.chronicConditions.split(',').map((c) => c.trim()),
+        };
+
+        createPatient(patientData)
+            .then(() => {
+                alert('Patient added successfully!');
+                setFormData({ name: '', age: '', chronicConditions: '' });
+            })
+            .catch((err) => alert('Error adding patient: ' + err.message));
+    };
+
+    return (
+        <div className="add-patient">
+            <h2>Add New Patient</h2>
+            <form onSubmit={handleSubmit}>
+                <label>
+                    Name:
+                    <input type="text" name="name" value={formData.name} onChange={handleChange} required />
+                </label>
+                <label>
+                    Age:
+                    <input type="number" name="age" value={formData.age} onChange={handleChange} required />
+                </label>
+                <label>
+                    Chronic Conditions (comma-separated):
+                    <input type="text" name="chronicConditions" value={formData.chronicConditions} onChange={handleChange} />
+                </label>
+                <button type="submit">Add Patient</button>
+            </form>
+        </div>
+    );
+}
+
+export default AddPatient;
+
+
+import React, { useState } from 'react';
+import { getAIInsights } from '../services/api';
+
+function AIInsights() {
+    const [inputData, setInputData] = useState({});
+    const [prediction, setPrediction] = useState(null);
+
+    const handleChange = (e) => {
+        setInputData({ ...inputData, [e.target.name]: e.target.value });
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        getAIInsights(inputData)
+            .then((response) => setPrediction(response.data.prediction))
+            .catch((err) => alert('Error fetching AI insights: ' + err.message));
+    };
+
+    return (
+        <div className="ai-insights">
+            <h2>AI Insights</h2>
+            <form onSubmit={handleSubmit}>
+                <label>
+                    Health Data:
+                    <input type="text" name="healthData" onChange={handleChange} required />
+                </label>
+                <button type="submit">Get Prediction</button>
+            </form>
+            {prediction && <p>Prediction: {prediction}</p>}
+        </div>
+    );
+}
+
+export default AIInsights;
+
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #f4f4f9;
+    color: #333;
+}
+
+header {
+    background: #007bff;
+    color: white;
+    padding: 10px 20px;
+    text-align: center;
+}
+
+.app-container {
+    padding: 20px;
+}
+
+.patient-list, .add-patient, .ai-insights {
+    margin: 20px 0;
+    background: white;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+form label {
+    display: block;
+    margin-bottom: 10px;
+}
+
+form input, form button {
+    margin-top: 5px;
+    padding: 10px;
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+form button {
+    background: #007bff;
+    color: white;
+    cursor: pointer;
+}
+
+form button:hover {
+    background: #0056b3;
+}
+
+
+
